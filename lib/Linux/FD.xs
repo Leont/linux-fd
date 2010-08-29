@@ -61,6 +61,17 @@ static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 }
 #define get_clockid(name) S_get_clockid(aTHX_ name)
 
+#ifndef EFD_CLOEXEC
+#define EFD_CLOEXEC 0
+#endif
+
+#ifndef SFD_CLOEXEC
+#define SFD_CLOEXEC 0
+#endif
+
+#ifndef TFD_CLOEXEC
+#define TFD_CLOEXEC 0
+#endif
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
