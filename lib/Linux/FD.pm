@@ -37,19 +37,21 @@ __END__
 
 =head1 NAME
 
-Linux::FD - Linux specific special file descriptors
+Linux::FD - Linux specific special filehandles
 
 =head1 VERSION
 
 Version 0.001
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-Quick summary of what the module does.
+Linux::FD provides you Linux specific special file handles. These are
 
-Perhaps a little code snippet.
+ * Event filehandles
+ * Signal filehandles
+ * Timer filehandles
 
-    use Linux::FD;
+These allow you to use conventional polling mechanisms to wait a large variety of events.
 
 =head1 SUBROUTINES
 
