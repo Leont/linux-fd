@@ -28,10 +28,16 @@ static void S_die_sys(pTHX_ const char* format) {
 }
 #define die_sys(format) S_die_sys(aTHX_ format)
 
-const sigset_t* sv_to_sigset(pTHX_ SV* sigmask) {
-	const char* string = SvPV_nolen(sigmask);
-	return (const sigset_t*) string;
+sigset_t* S_sv_to_sigset(pTHX_ SV* sigmask) {
+	if (!SvOK(sigmask))
+		return NULL;
+	if (!SvROK(sigmask) || !sv_isa(sigmask, "POSIX::SigSet"))
+		Perl_croak(aTHX_ "sigset is not of type POSIX::SigSet");
+	IV tmp = SvIV((SV*)SvRV(sigmask));
+	return INT2PTR(sigset_t*, tmp);
 }
+#define sv_to_sigset(sigmask) S_sv_to_sigset(aTHX_ sigmask)
+
 
 #define NANO_SECONDS 1000000000
 
@@ -90,7 +96,7 @@ int
 _new_fd(sigmask)
 	SV* sigmask;
 	CODE:
-		RETVAL = signalfd(-1, sv_to_sigset(aTHX, sigmask), SFD_CLOEXEC);
+		RETVAL = signalfd(-1, sv_to_sigset(sigmask), SFD_CLOEXEC);
 	OUTPUT:
 		RETVAL
 
@@ -101,7 +107,7 @@ void set_mask(self, sigmask)
 	int fd;
 	CODE:
 	fd = get_fd(self);
-	if(signalfd(fd, sv_to_sigset(aTHX_ sigmask), 0) == -1)
+	if(signalfd(fd, sv_to_sigset(sigmask), 0) == -1)
 		die_sys("Couldn't set_mask: %s");
 
 
