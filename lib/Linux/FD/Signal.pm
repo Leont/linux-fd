@@ -7,6 +7,7 @@ use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
 use POSIX qw/sigprocmask SIG_BLOCK SIG_UNBLOCK/;
+use Scalar::Util qw/blessed/;
 
 use parent 'IO::Handle';
 
@@ -32,16 +33,18 @@ ptr     Q
 utime   Q
 stime   Q
 address Q
+rest    A*
 MAP_END
 
-my $template = join '', $raw_map =~ m/ (\w) $ /xgm;
+my $template = join '', $raw_map =~ m/ (\w [*+?]? ) $ /xgm;
 
 my @keys = $raw_map =~ m/ ^ ( \w+ ) /xgm;
 
 sub new {
 	my ($class, $sigmask) = @_;
 
-	my $fd = _new_fd($sigmask);
+	my $sigset = blessed($sigmask) && $sigmask->isa('POSIX::SigSet') ? $sigmask : POSIX::SigSet->new(sig_num($sigmask));
+	my $fd = _new_fd($sigset);
 	croak "Can't open signalfd descriptor: $!" if $fd == $fail_fd;
 	open my $fh, '+<&', $fd or croak "Can't fdopen($fd): $!";
 	bless $fh, $class;
@@ -80,7 +83,7 @@ Version 0.001
 
 This creates a signalfd file descriptor that can be used to accept signals targeted at the caller. This provides an alternative to the use of a signal handler or sigwaitinfo, and has the advantage that the file descriptor may be monitored by select, poll, and epoll.
 
-The $sigmask argument specifies the set of signals that the caller wishes to accept via the file descriptor. This should be a L<POSIX::SigSet|POSIX> object. Normally, the set of signals to be received via the file descriptor should be blocked using POSIX' sigprocmask, to prevent the signals being handled according to their default dispositions. It is not possible to receive SIGKILL or SIGSTOP signals via a signalfd file descriptor; these signals are silently ignored if specified in $sigmask.
+The $sigmask argument specifies the set of signals that the caller wishes to accept via the file descriptor. This should either be a signal name(without the C<SIG> prefix) or a L<POSIX::SigSet|POSIX> object. Normally, the set of signals to be received via the file descriptor should be blocked to prevent the signals being handled according to their default dispositions. It is not possible to receive SIGKILL or SIGSTOP signals via a signalfd file descriptor; these signals are silently ignored if specified in $sigmask.
 
 =head2 set_mask($sigmask)
 
@@ -99,6 +102,10 @@ The information is returned as a hashref with the following keys: signo, errno, 
 =head1 AUTHOR
 
 Leon Timmermans, C<< <leont at cpan.org> >>
+
+=head1 SEE ALSO
+
+L<Signal::Mask>
 
 =head1 BUGS
 
