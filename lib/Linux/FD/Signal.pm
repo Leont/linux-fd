@@ -6,6 +6,8 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
+use Errno qw/EAGAIN EINTR/;
+use Fcntl qw//;
 use POSIX qw/sigprocmask SIG_BLOCK SIG_UNBLOCK/;
 use Scalar::Util qw/blessed/;
 
@@ -53,7 +55,14 @@ sub new {
 
 sub receive {
 	my $self = shift;
-	sysread $self, my ($raw), $signalfd_size or croak "Couldn't read signalfd_info: $!";
+	my ($ret, $raw);
+	do {
+		$ret = sysread $self, $raw, $signalfd_size;
+	} while (not defined $ret and $! == EINTR);
+	if (not defined $ret) {
+		return if $! == EAGAIN;
+		croak "Couldn't read signalfd_info: $!";
+	}
 	my %ret;
 	@ret{@keys} = unpack $template, $raw;
 	return \%ret;
@@ -81,7 +90,7 @@ Version 0.001
 
 =head2 new($sigmask)
 
-This creates a signalfd file descriptor that can be used to accept signals targeted at the caller. This provides an alternative to the use of a signal handler or sigwaitinfo, and has the advantage that the file descriptor may be monitored by select, poll, and epoll.
+This creates a signalfd file descriptor that can be used to accept signals targeted at the caller. This provides an alternative to the use of a signal handler or sigwaitinfo, and has the advantage that the file descriptor may be monitored by select, poll, and epoll. The handle will be non-blocking by default.
 
 The $sigmask argument specifies the set of signals that the caller wishes to accept via the file descriptor. This should either be a signal name(without the C<SIG> prefix) or a L<POSIX::SigSet|POSIX> object. Normally, the set of signals to be received via the file descriptor should be blocked to prevent the signals being handled according to their default dispositions. It is not possible to receive SIGKILL or SIGSTOP signals via a signalfd file descriptor; these signals are silently ignored if specified in $sigmask.
 

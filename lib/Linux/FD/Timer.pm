@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
+use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
@@ -26,9 +27,16 @@ sub new {
 	return $fh;
 }
 
-sub wait {
+sub receive {
 	my $self = shift;
-	sysread $self, my ($raw), $timer_size or croak "Couldn't read timerfd: $!";
+	my ($ret, $raw);
+	do {
+		$ret = sysread $self, $raw, $timer_size;
+	} while (not defined $ret and $! == EINTR);
+	if (not defined $ret) {
+		return if $! == EAGAIN;
+		croak "Couldn't read timerfd: $!";
+	}
 	return unpack 'Q', $raw;
 }
 
@@ -63,7 +71,7 @@ This module creates and operates on a timer that delivers timer expiration notif
 
 =head2 new($clockid)
 
-This creates a new timer object, and returns a file descriptor that refers to that timer. The clockid argument specifies the clock that is used to mark the progress of the timer, and must be either C<'realtime'> or C<'monotonic'>. C<realtime> is a settable system-wide clock. C<monotonic> is a non-settable clock that is not affected by discontinuous changes in the system clock (e.g., manual changes to system time). The current value of each of these clocks can be retrieved using L<POSIX::RT::Clock>.
+This creates a new timer object, and returns a file handle that refers to that timer. The clockid argument specifies the clock that is used to mark the progress of the timer, and must be either C<'realtime'> or C<'monotonic'>. C<realtime> is a settable system-wide clock. C<monotonic> is a non-settable clock that is not affected by discontinuous changes in the system clock (e.g., manual changes to system time). The current value of each of these clocks can be retrieved using L<POSIX::RT::Clock>. The handle will be non-blocking by default.
 
 =head2 get_timeout()
 
@@ -73,9 +81,9 @@ Get the timeout value. In list context, it also returns the interval value. Note
 
 Set the timer and interval values. If C<$abstime> is true, they are absolute values, otherwise they are relative to the current time. Returns the old value like C<get_time> does.
 
-=head2 wait
+=head2 receive
 
-If the timer has already expired one or more times since its settings were last modified using settime(), or since the last successful wait, then wait returns an unsigned 8-byte integer containing the number of expirations that have occurred.
+If the timer has already expired one or more times since its settings were last modified using settime(), or since the last successful wait, then receive returns an unsigned 8-byte integer containing the number of expirations that have occurred. If not it either returns undef or it blocks (if the handle is blocking).
 
 =head1 AUTHOR
 

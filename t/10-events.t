@@ -3,7 +3,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Linux::FD 'eventfd';
 use IO::Select;
 
@@ -17,6 +17,8 @@ $selector->add($fd);
 ok !$selector->can_read(0), "Can't read an empty eventfd";
 
 ok $selector->can_write(0), "Can write to an empty eventfd";
+
+ok !defined $fd->get, 'Can\'t read an empty eventfd';
 
 $fd->add(42);
 

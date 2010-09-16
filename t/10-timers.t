@@ -3,7 +3,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Linux::FD 'timerfd';
 use IO::Select;
 use Time::HiRes qw/sleep/;
@@ -17,15 +17,17 @@ $selector->add($fd);
 
 ok !$selector->can_read(0), 'Can\'t read an empty timerfd';
 
+ok !defined $fd->receive, 'Can\'t read an empty signalfd directly';
+
 $fd->set_timeout(0.1);
 
 sleep 0.2;
 
 ok $selector->can_read(0), 'Can read an triggered timerfd';
 
-ok $fd->wait, 'Got timeout';
+ok $fd->receive, 'Got timeout';
 
-ok !$selector->can_read(0), 'Can\'t read an waited timerfd';
+ok !$selector->can_read(0), 'Can\'t read an received timerfd';
 
 $fd->set_timeout(0.1, 0.1);
 
@@ -36,4 +38,4 @@ is $interval, 0.1, 'Interval is right';
 
 sleep 0.21;
 
-is $fd->wait, 2, 'Got two timeouts';
+is $fd->receive, 2, 'Got two timeouts';

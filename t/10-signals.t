@@ -3,7 +3,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Test::Exception;
 use Linux::FD 'signalfd';
 use IO::Select;
@@ -22,6 +22,8 @@ my $fd = signalfd($sigset);
 $selector->add($fd);
 
 ok !$selector->can_read(0), 'Can\'t read an empty signalfd';
+
+ok !defined $fd->receive, 'Can\'t read an empty signalfd directly';
 
 lives_ok { kill SIGUSR1, $$ } 'Not killed by sigusr1';
 

@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
+use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
@@ -27,14 +28,28 @@ sub new {
 
 sub get {
 	my $self = shift;
-	sysread $self, my ($raw), $event_size or croak "Couldn't read from eventfd: $!";
+	my ($ret, $raw);
+	do {
+		$ret = sysread $self, $raw, $event_size;
+	} while (not defined $ret and $! == EINTR);
+	if (not defined $ret) {
+		return if $! == EAGAIN;
+		croak "Couldn't read from eventfd: $!";
+	}
 	return unpack 'Q', $raw;
 }
 
 sub add {
 	my ($self, $value) = @_;
 	my $raw = pack 'Q', int $value;
-	syswrite $self, $raw, $event_size or croak "Couldn't write value '$value' to eventfd: $!";
+	my $ret;
+	do {
+		$ret = syswrite $self, $raw, $event_size;
+	} while (not defined $ret and $! == EINTR);
+	if (not defined $ret) {
+		return if $! == EAGAIN;
+		croak "Couldn't write value '$value' to eventfd: $!";
+	}
 	return;
 }
 
@@ -66,7 +81,7 @@ Version 0.001
 
 =head2 new($initial_value)
 
-This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. This counter is initialized with the value specified in the argument $initial_value.
+This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. This counter is initialized with the value specified in the argument $initial_value. The handle will be non-blocking by default.
 
 =head2 get()
 
