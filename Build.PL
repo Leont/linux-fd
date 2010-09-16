@@ -2,8 +2,9 @@ use 5.006;
 use strict;
 use warnings;
 use Module::Build;
+use Config;
 
-if ($^O ne 'linux') {
+if ($^O ne 'linux' or not $Config{use64bitint}) {
 	print "No support for OS\n";
 	exit 0;
 }
