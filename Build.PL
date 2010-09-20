@@ -16,7 +16,6 @@ my $builder = Module::Build->new(
 	dist_version_from   => 'lib/Linux/FD.pm',
 	build_requires      => {
 		'Test::More'    => 0,
-		'Test::Exception' => 0,
 	},
 	requires	        => {
 		parent          => 0,
@@ -27,6 +26,12 @@ my $builder = Module::Build->new(
 	add_to_cleanup      => [ 'Linux-FD-*' ],
 	create_makefile_pl  => 'small',
 	sign                => 1,
+	meta_merge          => {
+		resources       => {
+			bugtracker  => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=Linux-FD',
+			repository  => 'http://github.com/Leont/linux-fd'
+		}
+	},
 );
 
 $builder->create_build_script();
