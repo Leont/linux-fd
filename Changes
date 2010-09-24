@@ -1,5 +1,8 @@
 Revision history for Linux-FD
 
+0.002   2010-09-24
+        Fixed a unit test
+
 0.001   2010-09-20
         First version, released on an unsuspecting world.
 

@@ -10,7 +10,7 @@ use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 const my $fail_fd    => -1;
 const my $event_size => 8;
@@ -63,7 +63,7 @@ Linux::FD::Event - Event filehandles
 
 =head1 VERSION
 
-Version 0.001
+Version 0.002
 
 =head1 SYNOPSIS
 

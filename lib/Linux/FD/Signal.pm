@@ -13,7 +13,7 @@ use Scalar::Util qw/blessed/;
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 const my $fail_fd       => -1;
 const my $signalfd_size => 128;
@@ -78,7 +78,7 @@ Linux::FD::Signal - Signal filehandles
 
 =head1 VERSION
 
-Version 0.001
+Version 0.002
 
 =head1 SYNOPSIS
 

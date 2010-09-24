@@ -10,7 +10,7 @@ use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 const my $fail_fd    => -1;
 const my $timer_size => 8;
@@ -50,7 +50,7 @@ Linux::FD::Timer - Timer filehandles for Linux
 
 =head1 VERSION
 
-Version 0.001
+Version 0.002
 
 =head1 SYNOPSIS
 

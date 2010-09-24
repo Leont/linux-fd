@@ -5,7 +5,7 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 use Sub::Exporter -setup => { exports => [qw/eventfd signalfd timerfd/] };
 
@@ -41,7 +41,7 @@ Linux::FD - Linux specific special filehandles
 
 =head1 VERSION
 
-Version 0.001
+Version 0.002
 
 =head1 DESCRIPTION
 
