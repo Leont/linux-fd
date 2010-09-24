@@ -34,7 +34,7 @@ $fd->set_timeout(0.1, 0.1);
 my ($value, $interval) = $fd->get_timeout;
 
 cmp_ok $value, '<=', 0.1, 'Value is right';
-is $interval, 0.1, 'Interval is right';
+ok 0.099 < $interval && $interval < 0.101, 'Interval is right';
 
 sleep 0.21;
 
