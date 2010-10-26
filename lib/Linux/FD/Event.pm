@@ -11,7 +11,7 @@ use parent 'IO::Handle';
 
 our $VERSION = '0.002';
 
-const my $fail_fd    => -1;
+const my $fail_fd => -1;
 
 sub new {
 	my ($class, $initial) = @_;

@@ -6,41 +6,14 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
-use Errno qw/EAGAIN EINTR/;
-use Fcntl qw//;
-use POSIX qw/sigprocmask SIG_BLOCK SIG_UNBLOCK/;
 use Scalar::Util qw/blessed/;
+use IPC::Signal qw/sig_num/;
 
 use parent 'IO::Handle';
 
 our $VERSION = '0.002';
 
-const my $fail_fd       => -1;
-const my $signalfd_size => 128;
-
-const my $raw_map => <<'MAP_END';
-signo   L
-errno   l
-code    l
-pid     L
-uid     L
-fd      l
-tid     L
-band    L
-overrun L
-trapno  L
-status  l
-int     l
-ptr     Q
-utime   Q
-stime   Q
-address Q
-rest    A*
-MAP_END
-
-my $template = join '', $raw_map =~ m/ (\w [*+?]? ) $ /xgm;
-
-my @keys = $raw_map =~ m/ ^ ( \w+ ) /xgm;
+const my $fail_fd => -1;
 
 sub new {
 	my ($class, $sigmask) = @_;
@@ -51,21 +24,6 @@ sub new {
 	open my $fh, '+<&', $fd or croak "Can't fdopen($fd): $!";
 	bless $fh, $class;
 	return $fh;
-}
-
-sub receive {
-	my $self = shift;
-	my ($ret, $raw);
-	do {
-		$ret = sysread $self, $raw, $signalfd_size;
-	} while (not defined $ret and $! == EINTR);
-	if (not defined $ret) {
-		return if $! == EAGAIN;
-		croak "Couldn't read signalfd_info: $!";
-	}
-	my %ret;
-	@ret{@keys} = unpack $template, $raw;
-	return \%ret;
 }
 
 1;    # End of Linux::FD::Signal

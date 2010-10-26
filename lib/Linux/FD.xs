@@ -82,6 +82,10 @@ void non_blocking(int fd) {
 #define TFD_CLOEXEC 0
 #endif
 
+#define SET_HASH_IMPL(key,value) hv_store(hash, key, sizeof key - 1, value, 0)
+#define SET_HASH_U(key) SET_HASH_IMPL(#key, newSVuv(buffer.ssi_##key))
+#define SET_HASH_I(key) SET_HASH_IMPL(#key, newSViv(buffer.ssi_##key))
+
 MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
 int
@@ -158,6 +162,45 @@ void set_mask(self, sigmask)
 	fd = get_fd(self);
 	if(signalfd(fd, sv_to_sigset(sigmask), 0) == -1)
 		die_sys("Couldn't set_mask: %s");
+
+SV*
+receive(self)
+	SV* self;
+	PREINIT:
+		struct signalfd_siginfo buffer;
+		int tmp, timer;
+		HV* hash;
+	CODE:
+		timer = get_fd(self);
+		do {
+			tmp = read(timer, &buffer, sizeof buffer);
+		} while (tmp == -1 && errno == EINTR);
+		if (tmp == -1) {
+			if (errno == EAGAIN)
+				XSRETURN_EMPTY;
+			else
+				die_sys("Couldn't read from signalfd: %s");
+		}
+		hash = newHV();
+		SET_HASH_U(signo);
+		SET_HASH_I(errno);
+		SET_HASH_I(code);
+		SET_HASH_U(pid);
+		SET_HASH_U(uid);
+		SET_HASH_I(fd);
+		SET_HASH_U(tid);
+		SET_HASH_U(band);
+		SET_HASH_U(overrun);
+		SET_HASH_U(trapno);
+		SET_HASH_I(status);
+		SET_HASH_I(int);
+		SET_HASH_U(ptr);
+		SET_HASH_U(utime);
+		SET_HASH_U(stime);
+		SET_HASH_U(addr);
+		RETVAL = newRV_noinc((SV*)hash);
+	OUTPUT:
+		RETVAL
 
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
