@@ -153,7 +153,7 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 	PREINIT:
 		int timer;
 		struct itimerspec new_itimer, old_itimer;
-	CODE:
+	PPCODE:
 		timer = get_fd(self);
 		nv_to_timespec(new_value, &new_itimer.it_value);
 		nv_to_timespec(new_interval, &new_itimer.it_interval);
