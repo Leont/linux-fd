@@ -206,3 +206,25 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
+
+IV
+receive(self)
+	SV* self;
+	PREINIT:
+		uint64_t buffer;
+		int ret, timer;
+	CODE:
+		timer = get_fd(self);
+		do {
+			ret = read(timer, &buffer, sizeof buffer);
+		} while (ret == -1 && errno == EINTR);
+		if (ret == -1) {
+			if (errno == EAGAIN)
+				XSRETURN_EMPTY;
+			else
+				die_sys("Couldn't read from timerfd: %s");
+		}
+		RETVAL = buffer;
+	OUTPUT:
+		RETVAL
+

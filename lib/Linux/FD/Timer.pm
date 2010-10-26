@@ -6,16 +6,12 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
-use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
 our $VERSION = '0.002';
 
-const my $fail_fd    => -1;
-const my $timer_size => 8;
-
-## no critic (ProhibitBuiltinHomonyms)
+const my $fail_fd => -1;
 
 sub new {
 	my ($class, $clock_id) = @_;
@@ -25,19 +21,6 @@ sub new {
 	open my $fh, '+<&', $fd or croak "Can't fdopen($fd): $!";
 	bless $fh, $class;
 	return $fh;
-}
-
-sub receive {
-	my $self = shift;
-	my ($ret, $raw);
-	do {
-		$ret = sysread $self, $raw, $timer_size;
-	} while (not defined $ret and $! == EINTR);
-	if (not defined $ret) {
-		return if $! == EAGAIN;
-		croak "Couldn't read timerfd: $!";
-	}
-	return unpack 'Q', $raw;
 }
 
 1;    # End of Linux::FD::Timer
