@@ -6,14 +6,12 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
-use Errno qw/EAGAIN EINTR/;
 
 use parent 'IO::Handle';
 
 our $VERSION = '0.002';
 
 const my $fail_fd    => -1;
-const my $event_size => 8;
 
 sub new {
 	my ($class, $initial) = @_;
@@ -24,33 +22,6 @@ sub new {
 	open my $fh, '+<&', $fd or croak "Can't fdopen($fd): $!";
 	bless $fh, $class;
 	return $fh;
-}
-
-sub get {
-	my $self = shift;
-	my ($ret, $raw);
-	do {
-		$ret = sysread $self, $raw, $event_size;
-	} while (not defined $ret and $! == EINTR);
-	if (not defined $ret) {
-		return if $! == EAGAIN;
-		croak "Couldn't read from eventfd: $!";
-	}
-	return unpack 'Q', $raw;
-}
-
-sub add {
-	my ($self, $value) = @_;
-	my $raw = pack 'Q', int $value;
-	my $ret;
-	do {
-		$ret = syswrite $self, $raw, $event_size;
-	} while (not defined $ret and $! == EINTR);
-	if (not defined $ret) {
-		return if $! == EAGAIN;
-		croak "Couldn't write value '$value' to eventfd: $!";
-	}
-	return;
 }
 
 1;    # End of Linux::FD::Event

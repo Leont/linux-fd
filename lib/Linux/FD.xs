@@ -93,6 +93,50 @@ _new_fd(initial)
 	OUTPUT:
 		RETVAL
 
+IV
+get(self)
+	SV* self;
+	PREINIT:
+		uint64_t buffer;
+		int ret, events;
+	CODE:
+		events = get_fd(self);
+		do {
+			ret = read(events, &buffer, sizeof buffer);
+		} while (ret == -1 && errno == EINTR);
+		if (ret == -1) {
+			if (errno == EAGAIN)
+				XSRETURN_EMPTY;
+			else
+				die_sys("Couldn't read from eventfd: %s");
+		}
+		RETVAL = buffer;
+	OUTPUT:
+		RETVAL
+
+IV
+add(self, value)
+	SV* self;
+	IV value;
+	PREINIT:
+		uint64_t buffer;
+		int ret, events;
+	CODE:
+		events = get_fd(self);
+		buffer = value;
+		do {
+			ret = write(events, &buffer, sizeof buffer);
+		} while (ret == -1 && errno == EINTR);
+		if (ret == -1) {
+			if (errno == EAGAIN)
+				XSRETURN_EMPTY;
+			else
+				die_sys("Couldn't write to eventfd: %s");
+		}
+		RETVAL = value;
+	OUTPUT:
+		RETVAL
+
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
