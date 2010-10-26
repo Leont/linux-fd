@@ -14,7 +14,12 @@ my $builder = Module::Build->new(
 	license             => 'perl',
 	dist_author         => q{Leon Timmermans <leont@cpan.org>},
 	dist_version_from   => 'lib/Linux/FD.pm',
+	configure_requires  => {
+		'Module::Build' => 0.28,
+	},
 	build_requires      => {
+		'ExtUtils::CBuilder' => 0,
+		'Module::Build' => 0.28,
 		'Test::More'    => 0,
 	},
 	requires	        => {
