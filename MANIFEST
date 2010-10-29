@@ -5,7 +5,10 @@ lib/Linux/FD.xs
 lib/Linux/FD/Event.pm
 lib/Linux/FD/Signal.pm
 lib/Linux/FD/Timer.pm
+LICENSE
+Makefile.PL
 MANIFEST
+META.yml
 README
 t/00-load.t
 t/10-events.t
@@ -13,5 +16,3 @@ t/10-signals.t
 t/10-timers.t
 t/pod-coverage.t
 t/pod.t
-Makefile.PL
-META.yml

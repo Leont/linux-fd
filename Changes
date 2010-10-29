@@ -1,5 +1,8 @@
 Revision history for Linux-FD
 
+0.003   2010-10-29
+        Converted send/receive methods to XS to be able to handle quads regardless of perl's IV size
+
 0.002   2010-09-24
         Fixed a unit test
 

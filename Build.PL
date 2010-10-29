@@ -4,7 +4,7 @@ use warnings;
 use Module::Build;
 use Config;
 
-if ($^O ne 'linux' or not $Config{use64bitint}) {
+if ($^O ne 'linux') {
 	print "No support for OS\n";
 	exit 0;
 }
@@ -23,9 +23,10 @@ my $builder = Module::Build->new(
 		'Test::More'    => 0,
 	},
 	requires	        => {
-		parent          => 0,
 		perl            => 5.006,
+		parent          => 0,
 		'Const::Fast'   => 0,
+		'IPC::Signal'   => 0,
 		'Sub::Exporter' => 0,
 	},
 	add_to_cleanup      => [ 'Linux-FD-*' ],

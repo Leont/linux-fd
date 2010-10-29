@@ -5,7 +5,7 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 use Sub::Exporter -setup => { exports => [qw/eventfd signalfd timerfd/] };
 

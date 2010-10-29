@@ -11,7 +11,7 @@ use IPC::Signal qw/sig_num/;
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 const my $fail_fd => -1;
 
