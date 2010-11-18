@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
+use Linux::FD ();
 
 use parent 'IO::Handle';
 

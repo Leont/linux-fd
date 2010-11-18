@@ -8,6 +8,7 @@ use Carp qw/croak/;
 use Const::Fast;
 use Scalar::Util qw/blessed/;
 use IPC::Signal qw/sig_num/;
+use Linux::FD ();
 
 use parent 'IO::Handle';
 
@@ -32,7 +33,7 @@ __END__
 
 =head1 NAME
 
-Linux::FD::Signal - Signal filehandles
+Linux::FD::Signal - Signal filehandles for Linux
 
 =head1 VERSION
 

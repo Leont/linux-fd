@@ -6,6 +6,7 @@ use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
 use Const::Fast;
+use Linux::FD ();
 
 use parent 'IO::Handle';
 
@@ -30,7 +31,7 @@ __END__
 
 =head1 NAME
 
-Linux::FD::Event - Event filehandles
+Linux::FD::Event - Event filehandles for Linux
 
 =head1 VERSION
 
