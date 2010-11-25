@@ -13,6 +13,7 @@ my $selector = IO::Select->new;
 alarm 2;
 
 my $fd = timerfd('realtime');
+$fd->blocking(0);
 $selector->add($fd);
 
 ok !$selector->can_read(0), 'Can\'t read an empty timerfd';

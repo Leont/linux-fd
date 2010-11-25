@@ -53,7 +53,7 @@ Version 0.002
 
 =head2 new($initial_value)
 
-This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. This counter is initialized with the value specified in the argument $initial_value. The handle will be non-blocking by default.
+This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. This counter is initialized with the value specified in the argument $initial_value.
 
 =head2 get()
 

@@ -12,6 +12,7 @@ my $selector = IO::Select->new;
 alarm 2;
 
 my $fd = eventfd(0);
+$fd->blocking(0);
 $selector->add($fd);
 
 ok !$selector->can_read(0), "Can't read an empty eventfd";
