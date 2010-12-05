@@ -1,5 +1,10 @@
 Revision history for Linux-FD
 
+0.004   2010-11-26
+        Made blocking handles the default again, to avoid confusion
+        Reversed module loading, so modules can be loaded separately
+        Improve sigmask_t support
+
 0.003   2010-10-29
         Converted send/receive methods to XS to be able to handle quads regardless of perl's IV size
 

@@ -12,7 +12,7 @@ use Linux::FD ();
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 const my $fail_fd => -1;
 
@@ -37,7 +37,7 @@ Linux::FD::Signal - Signal filehandles for Linux
 
 =head1 VERSION
 
-Version 0.002
+Version 0.004
 
 =head1 SYNOPSIS
 

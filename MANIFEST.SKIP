@@ -12,3 +12,4 @@ Linux-FD-.*
 ^lib/.*\.c$
 ^lib/.*\.o$
 ^.ignore
+^MYMETA.yml$

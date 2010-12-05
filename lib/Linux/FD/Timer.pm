@@ -10,7 +10,7 @@ use Linux::FD ();
 
 use parent 'IO::Handle';
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 const my $fail_fd => -1;
 
@@ -34,7 +34,7 @@ Linux::FD::Timer - Timer filehandles for Linux
 
 =head1 VERSION
 
-Version 0.002
+Version 0.004
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,6 @@ Version 0.002
 
  my $fh = Linux::FD::Timer->new('monotonic');
  $fh->set_timeout(10, 10);
- $fh->blocking(1);
  while (1) {
      #do something..
      $fh->wait; #until the 10 seconds have passed.
