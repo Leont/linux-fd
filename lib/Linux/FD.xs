@@ -1,3 +1,10 @@
+#ifndef _GNU_SOURCE
+#	define _GNU_SOURCE
+#endif
+#define GNU_STRERROR_R
+
+#include <string.h>
+
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
 #include <sys/timerfd.h>
@@ -10,14 +17,14 @@
 #define get_fd(self) PerlIO_fileno(IoOFP(sv_2io(SvRV(self))));
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-#ifdef _GNU_SOURCE
+#if _POSIX_VERSION >= 200112L
 	const char* message = strerror_r(errno, buffer, buffer_size);
-	if (message != buffer) {
-		memcpy(buffer, message, buffer_size -1);
-		buffer[buffer_size] = '\0';
-	}
+	if (message != buffer)
+		memcpy(buffer, message, buffer_size);
 #else
-	strerror_r(errno, buffer, buffer_size);
+	const char* message = strerror(errno);
+	strncpy(buffer, message, buffer_size - 1);
+	buffer[buffer_size - 1] = '\0';
 #endif
 }
 

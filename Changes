@@ -3,6 +3,7 @@ Revision history for Linux-FD
 {{$NEXT}}
           Converted to Dist::Zilla
           Handle 5.15.3's new POSIX::SigSet representation
+          Fix strerror_r usage wrt GNU vs POSIX
 
 0.004   2010-11-26
         Made blocking handles the default again, to avoid confusion
