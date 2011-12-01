@@ -27,9 +27,9 @@ sub new {
 
 1;    # End of Linux::FD::Signal
 
-__END__
-
 #ABSTRACT: Signal filehandles for Linux
+
+__END__
 
 =head1 SYNOPSIS
 

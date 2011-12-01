@@ -25,9 +25,9 @@ sub new {
 
 1;    # End of Linux::FD::Event
 
-__END__
-
 #ABSTRACT: Event filehandles for Linux
+
+__END__
 
 =head1 SYNOPSIS
 

@@ -30,9 +30,9 @@ sub timerfd {
 
 1;
 
-__END__
-
 #ABSTRACT: Linux specific special filehandles
+
+__END__
 
 =head1 DESCRIPTION
 

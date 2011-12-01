@@ -24,9 +24,9 @@ sub new {
 
 1;    # End of Linux::FD::Timer
 
-__END__
-
 #ABSTRACT: Timer filehandles for Linux
+
+__END__
 
 =head1 SYNOPSIS
 
