@@ -95,11 +95,21 @@ static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
+BOOT:
+	HV* flags = get_hv("Linux::FD::Event::flags", GV_ADD | GV_ADDMULTI);
+#ifdef EFD_NONBLOCK
+	hv_stores(flags, "non-blocking", newSVuv(EFD_NONBLOCK));
+#endif
+#ifdef EFD_SEMAPHORE
+	hv_stores(flags, "semaphore", newSVuv(EFD_SEMAPHORE));
+#endif
+
 int
-_new_fd(initial)
-	IV initial;
+_new_fd(initial, flags)
+	UV initial;
+	int flags;
 	CODE:
-		RETVAL = eventfd(initial, EFD_CLOEXEC);
+		RETVAL = eventfd(initial, EFD_CLOEXEC | flags);
 	OUTPUT:
 		RETVAL
 
