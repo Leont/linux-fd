@@ -2,7 +2,6 @@ use 5.006;
 use strict;
 use warnings;
 use Module::Build;
-use Config;
 
 if ($^O ne 'linux') {
 	print "No support for OS\n";

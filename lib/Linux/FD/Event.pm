@@ -40,7 +40,7 @@ __END__
  
  my $foo = Linux::FD::Event->new(42);
  if (fork) {
-	 say $foo->get while sleep 1
+     say $foo->get while sleep 1
  }
  else {
      $foo->add($_) while <>;

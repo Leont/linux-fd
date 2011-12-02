@@ -38,9 +38,15 @@ __END__
 
 Linux::FD provides you Linux specific special file handles. These are
 
- * Event filehandles
- * Signal filehandles
- * Timer filehandles
+=over 4
+
+=item * Event filehandles
+
+=item * Signal filehandles
+
+=item * Timer filehandles
+
+=back
 
 These allow you to use conventional polling mechanisms to wait for a large variety of events.
 
