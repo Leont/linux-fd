@@ -1,6 +1,8 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+
+0.007     2011-12-04 13:10:14 Europe/Amsterdam
           Improve compatibility with legacy perl versions
           Fixed C89 compatibility
 
