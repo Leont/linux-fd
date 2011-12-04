@@ -13,6 +13,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 
 #define get_fd(self) PerlIO_fileno(IoOFP(sv_2io(SvRV(self))));
 
