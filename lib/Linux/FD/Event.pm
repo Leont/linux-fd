@@ -5,27 +5,19 @@ use 5.006;
 use strict;
 use warnings FATAL => 'all';
 use Carp qw/croak/;
-use Const::Fast;
 use Linux::FD ();
 use List::Util qw/reduce/;
 
 use parent 'IO::Handle';
 
-const my $fail_fd => -1;
-
 Internals::SvREADONLY(our %flags, 1);
 
 sub new {
 	my ($class, $initial, @flag_names) = @_;
-	$initial ||= 0;
-	my $flag_bits = reduce { $a + $b } map { $flags{$_} || croak "No such flag '$_'" } @flag_names;
-	$flag_bits ||= 0;
+	my $flag_bits = reduce { $a + $b } 0, map { $flags{$_} || croak "No such flag '$_'" } @flag_names;
 
-	my $fd = _new_fd($initial, $flag_bits);
-	croak "Can't open eventfd descriptor: $!" if $fd == $fail_fd;
-	open my $fh, '+<&', $fd or croak "Can't fdopen($fd): $!";
-	bless $fh, $class;
-	return $fh;
+	my $fh = _new_fh($initial || 0, $flag_bits);
+	return bless $fh, $class;
 }
 
 1;    # End of Linux::FD::Event

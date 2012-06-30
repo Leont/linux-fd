@@ -79,6 +79,18 @@ static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 }
 #define get_clockid(name) S_get_clockid(aTHX_ name)
 
+static SV* S_io_fdopen(pTHX_ int fd) {
+	PerlIO* pio = PerlIO_fdopen(fd, "r");
+	GV* gv = newGVgen("Symbol");
+	SV* ret = newRV_noinc((SV*)gv);
+	IO* io = GvIOn(gv);
+	IoTYPE(io) = '<';
+	IoIFP(io) = pio;
+	IoOFP(io) = pio;
+	return ret;
+}
+#define io_fdopen(fd) S_io_fdopen(aTHX_ fd)
+
 #ifndef EFD_CLOEXEC
 #define EFD_CLOEXEC 0
 #endif
@@ -108,16 +120,21 @@ BOOT:
 #endif
 	}
 
-int
-_new_fd(initial, flags)
+SV*
+_new_fh(initial, flags)
 	UV initial;
 	int flags;
+	PREINIT:
+		int fd;
 	CODE:
-		RETVAL = eventfd(initial, EFD_CLOEXEC | flags);
+		fd = eventfd(initial, EFD_CLOEXEC | flags);
+		if (fd < 0)
+			Perl_croak(aTHX_ "Can't open eventfd descriptor: %s");
+		RETVAL = io_fdopen(fd);
 	OUTPUT:
 		RETVAL
 
-IV
+UV
 get(self)
 	SV* self;
 	PREINIT:
@@ -138,10 +155,10 @@ get(self)
 	OUTPUT:
 		RETVAL
 
-IV
+UV
 add(self, value)
 	SV* self;
-	IV value;
+	UV value;
 	PREINIT:
 		uint64_t buffer;
 		int ret, events;
@@ -164,11 +181,16 @@ add(self, value)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
-int
-_new_fd(sigmask)
+SV*
+_new_fh(sigmask)
 	SV* sigmask;
+	PREINIT:
+	int fd;
 	CODE:
-		RETVAL = signalfd(-1, sv_to_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
+		fd = signalfd(-1, sv_to_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
+		if (fd < 0)
+			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
+		RETVAL = io_fdopen(fd);
 	OUTPUT:
 		RETVAL
 
@@ -224,14 +246,18 @@ receive(self)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
 
-int
-_new_fd(clock_name)
+SV*
+_new_fh(clock_name)
 	const char* clock_name;
 	PREINIT:
 		clockid_t clock_id;
+		int fd;
 	CODE:
 		clock_id = get_clockid(clock_name);
-		RETVAL = timerfd_create(clock_id, TFD_CLOEXEC);
+		fd = timerfd_create(clock_id, TFD_CLOEXEC);
+		if (fd < 0)
+			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
+		RETVAL = io_fdopen(fd);
 	OUTPUT:
 		RETVAL
 
