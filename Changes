@@ -1,6 +1,7 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+          Move some code from Perl to XS, mixing was more complicated.
 
 0.007     2011-12-04 13:10:14 Europe/Amsterdam
           Improve compatibility with legacy perl versions

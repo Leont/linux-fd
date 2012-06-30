@@ -4,21 +4,9 @@ use 5.006;
 
 use strict;
 use warnings FATAL => 'all';
-use Carp qw/croak/;
 use Linux::FD ();
-use List::Util qw/reduce/;
 
 use parent 'IO::Handle';
-
-Internals::SvREADONLY(our %flags, 1);
-
-sub new {
-	my ($class, $initial, @flag_names) = @_;
-	my $flag_bits = reduce { $a + $b } 0, map { $flags{$_} || croak "No such flag '$_'" } @flag_names;
-
-	my $fh = _new_fh($initial || 0, $flag_bits);
-	return bless $fh, $class;
-}
 
 1;    # End of Linux::FD::Event
 

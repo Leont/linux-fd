@@ -4,19 +4,9 @@ use 5.006;
 
 use strict;
 use warnings FATAL => 'all';
-use Scalar::Util qw/blessed/;
-use IPC::Signal qw/sig_num/;
 use Linux::FD ();
 
 use parent 'IO::Handle';
-
-sub new {
-	my ($class, $sigmask) = @_;
-
-	my $sigset = blessed($sigmask) && $sigmask->isa('POSIX::SigSet') ? $sigmask : POSIX::SigSet->new(sig_num($sigmask));
-	my $fh = _new_fh($sigset);
-	return bless $fh, $class;
-}
 
 1;    # End of Linux::FD::Signal
 

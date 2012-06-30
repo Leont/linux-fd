@@ -36,7 +36,7 @@ static void S_die_sys(pTHX_ const char* format) {
 }
 #define die_sys(format) S_die_sys(aTHX_ format)
 
-sigset_t* S_sv_to_sigset(pTHX_ SV* sigmask, const char* name) {
+static sigset_t* S_sv_to_sigset(pTHX_ SV* sigmask, const char* name) {
 	IV tmp;
 	if (!SvOK(sigmask))
 		return NULL;
@@ -50,6 +50,20 @@ sigset_t* S_sv_to_sigset(pTHX_ SV* sigmask, const char* name) {
 #endif
 }
 #define sv_to_sigset(sigmask, name) S_sv_to_sigset(aTHX_ sigmask, name)
+
+static sigset_t* S_get_sigset(pTHX_ SV* signal, const char* name) {
+	if (SvROK(signal))
+		return sv_to_sigset(signal, name);
+	else {
+		int signo = (SvIOK(signal) || looks_like_number(signal)) && SvIV(signal) ? SvIV(signal) : whichsig(SvPV_nolen(signal));
+		SV* buffer = sv_2mortal(newSV(sizeof(sigset_t)));
+		sigset_t* ret = (sigset_t*)SvPV_nolen(buffer);
+		sigemptyset(ret);
+		sigaddset(ret, signo);
+		return ret;
+	}
+}
+#define get_sigset(sigmask, name) S_get_sigset(aTHX_ sigmask, name)
 
 #define NANO_SECONDS 1000000000
 
@@ -79,17 +93,19 @@ static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 }
 #define get_clockid(name) S_get_clockid(aTHX_ name)
 
-static SV* S_io_fdopen(pTHX_ int fd) {
+static SV* S_io_fdopen(pTHX_ int fd, SV* classname) {
 	PerlIO* pio = PerlIO_fdopen(fd, "r");
 	GV* gv = newGVgen("Symbol");
 	SV* ret = newRV_noinc((SV*)gv);
 	IO* io = GvIOn(gv);
+	HV* stash = gv_stashsv(classname, FALSE);
 	IoTYPE(io) = '<';
 	IoIFP(io) = pio;
 	IoOFP(io) = pio;
+	sv_bless(ret, stash);
 	return ret;
 }
-#define io_fdopen(fd) S_io_fdopen(aTHX_ fd)
+#define io_fdopen(fd, classname) S_io_fdopen(aTHX_ fd, classname)
 
 #ifndef EFD_CLOEXEC
 #define EFD_CLOEXEC 0
@@ -107,30 +123,40 @@ static SV* S_io_fdopen(pTHX_ int fd) {
 #define SET_HASH_U(key) SET_HASH_IMPL(#key, newSVuv(buffer.ssi_##key))
 #define SET_HASH_I(key) SET_HASH_IMPL(#key, newSViv(buffer.ssi_##key))
 
-MODULE = Linux::FD				PACKAGE = Linux::FD::Event
-
-BOOT:
-	{
-	HV* flags = get_hv("Linux::FD::Event::flags", GV_ADD | GV_ADDMULTI);
+static map flags = {
 #ifdef EFD_NONBLOCK
-	hv_stores(flags, "non-blocking", newSVuv(EFD_NONBLOCK));
+	{ "non-blocking", EFD_NONBLOCK },
 #endif
 #ifdef EFD_SEMAPHORE
-	hv_stores(flags, "semaphore", newSVuv(EFD_SEMAPHORE));
+	{ "semaphore", EFD_SEMAPHORE },
 #endif
-	}
+};
+
+static UV S_get_event_flag(pTHX_ SV* flag_name) {
+	int i;
+	for (i = 0; i < sizeof flags / sizeof *flags; ++i)
+		if (strEQ(SvPV_nolen(flag_name), flags[i].key))
+			return flags[i].value;
+	Perl_croak(aTHX_ "No such flag '%s' known", flag_name);
+}
+#define get_event_flag(name) S_get_event_flag(aTHX_ name)
+
+MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
 SV*
-_new_fh(initial, flags)
+new(classname, initial = 0, ...)
+	SV* classname;
 	UV initial;
-	int flags;
 	PREINIT:
-		int fd;
+		HV* stash;
+		int fd, i, flags = EFD_CLOEXEC;
 	CODE:
-		fd = eventfd(initial, EFD_CLOEXEC | flags);
+		for (i = 2; i < items; i++)
+			flags |= get_event_flag(ST(i));
+		fd = eventfd(initial, flags);
 		if (fd < 0)
 			Perl_croak(aTHX_ "Can't open eventfd descriptor: %s");
-		RETVAL = io_fdopen(fd);
+		RETVAL = io_fdopen(fd, classname);
 	OUTPUT:
 		RETVAL
 
@@ -182,15 +208,17 @@ add(self, value)
 MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
 SV*
-_new_fh(sigmask)
+new(classname, sigmask)
+	SV* classname;
 	SV* sigmask;
 	PREINIT:
 	int fd;
+	HV* stash;
 	CODE:
-		fd = signalfd(-1, sv_to_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
+		fd = signalfd(-1, get_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
 		if (fd < 0)
 			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
-		RETVAL = io_fdopen(fd);
+		RETVAL = io_fdopen(fd, classname);
 	OUTPUT:
 		RETVAL
 
@@ -247,7 +275,8 @@ receive(self)
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
 
 SV*
-_new_fh(clock_name)
+new(classname, clock_name)
+	SV* classname;
 	const char* clock_name;
 	PREINIT:
 		clockid_t clock_id;
@@ -257,7 +286,7 @@ _new_fh(clock_name)
 		fd = timerfd_create(clock_id, TFD_CLOEXEC);
 		if (fd < 0)
 			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
-		RETVAL = io_fdopen(fd);
+		RETVAL = io_fdopen(fd, classname);
 	OUTPUT:
 		RETVAL
 

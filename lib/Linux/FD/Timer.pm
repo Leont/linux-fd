@@ -8,13 +8,6 @@ use Linux::FD ();
 
 use parent 'IO::Handle';
 
-sub new {
-	my ($class, $clock_id) = @_;
-
-	my $fh = _new_fh($clock_id);
-	return bless $fh, $class;
-}
-
 1;    # End of Linux::FD::Timer
 
 #ABSTRACT: Timer filehandles for Linux

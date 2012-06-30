@@ -30,9 +30,9 @@ is($fd->get, 42, 'Value of eventfd was 42');
 ok !$selector->can_read(0), "Can't read an emptied eventfd";
 
 SKIP: {
-	skip '', 8 if not $Linux::FD::Event::flags{semaphore};
+	my $fd2 = eval { eventfd(0, 'semaphore') };
+	skip 'Semaphores not supported', 8 if not $fd2 and $@ =~ /^No such flag 'semaphore' known/;
 
-	my $fd2 = eventfd(0, 'semaphore');
 	$fd2->blocking(0);
 	$selector->add($fd2);
 
