@@ -50,7 +50,7 @@ Linux::FD provides you Linux specific special file handles. These are
 
 These allow you to use conventional polling mechanisms to wait for a large variety of events.
 
-=func eventfd($initial_value)
+=func eventfd($initial_value, @flags)
 
 This creates an eventfd handle. See L<Linux::FD::Event> for more information on it.
 

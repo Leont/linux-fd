@@ -12,8 +12,6 @@ use parent 'IO::Handle';
 
 #ABSTRACT: Timer filehandles for Linux
 
-__END__
-
 =head1 SYNOPSIS
 
  use Linux::FD::Timer;
