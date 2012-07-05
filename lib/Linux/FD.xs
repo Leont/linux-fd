@@ -18,10 +18,14 @@
 #define get_fd(self) PerlIO_fileno(IoOFP(sv_2io(SvRV(self))));
 
 static void get_sys_error(char* buffer, size_t buffer_size) {
-#if _POSIX_VERSION >= 200112L
+#if HAVE_STRERROR_R
+#	if STRERROR_R_PROTO == REENTRANT_PROTO_B_IBW
 	const char* message = strerror_r(errno, buffer, buffer_size);
 	if (message != buffer)
 		memcpy(buffer, message, buffer_size);
+#	else
+	strerror_r(errno, buffer, buffer_size);
+#	endif
 #else
 	const char* message = strerror(errno);
 	strncpy(buffer, message, buffer_size - 1);
