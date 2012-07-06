@@ -1,6 +1,8 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+
+0.008     2012-07-06 15:19:20 Europe/Bucharest
           Move some code from Perl to XS, mixing was more complicated.
           Improve strerror_r detection
 
