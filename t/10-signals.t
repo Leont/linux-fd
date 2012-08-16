@@ -3,7 +3,9 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 6;
+use Test::More 0.89;
+use Test::Exception;
+
 use Linux::FD 'signalfd';
 use IO::Select;
 use POSIX qw/sigprocmask SIGUSR1 SIG_SETMASK/;
@@ -34,3 +36,8 @@ my $sig_info = $fd->receive;
 is $sig_info->{signo}, SIGUSR1, 'Received SIGUSR1';
 
 ok !$selector->can_read(0), 'Can\'t read signalfd after signal reception';
+
+lives_ok { signalfd(SIGUSR1) } 'signalfd accepts signal number';
+lives_ok { signalfd('USR1') } 'signalfd accepts signal name';
+
+done_testing;
