@@ -3,10 +3,8 @@ package Linux::FD::Event;
 use 5.006;
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use Linux::FD ();
-
-use parent 'IO::Handle';
 
 1;    # End of Linux::FD::Event
 

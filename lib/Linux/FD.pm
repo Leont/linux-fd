@@ -10,24 +10,6 @@ use Sub::Exporter -setup => { exports => [qw/eventfd signalfd timerfd/] };
 use XSLoader;
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
 
-sub eventfd {
-	my @args = @_;
-	require Linux::FD::Event;
-	return Linux::FD::Event->new(@args);
-}
-
-sub signalfd {
-	my @args = @_;
-	require Linux::FD::Signal;
-	return Linux::FD::Signal->new(@args);
-}
-
-sub timerfd {
-	my @args = @_;
-	require Linux::FD::Timer;
-	return Linux::FD::Timer->new(@args);
-}
-
 1;
 
 #ABSTRACT: Linux specific special filehandles

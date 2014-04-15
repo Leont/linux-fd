@@ -84,8 +84,8 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 typedef struct { const char* key; clockid_t value; } map[];
 
 static map clocks = {
+	{ "monotonic", CLOCK_MONOTONIC },
 	{ "realtime" , CLOCK_REALTIME  },
-	{ "monotonic", CLOCK_MONOTONIC }
 };
 
 static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
@@ -98,12 +98,20 @@ static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
 }
 #define get_clockid(name) S_get_clockid(aTHX_ name)
 
-static SV* S_io_fdopen(pTHX_ int fd, SV* classname) {
+static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
+	SV* value;
+	if (!SvROK(ref) || !(value = SvRV(ref)))
+		Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
+	return SvIV(value);
+}
+#define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
+
+static SV* S_io_fdopen(pTHX_ int fd, const char* classname) {
 	PerlIO* pio = PerlIO_fdopen(fd, "r");
-	GV* gv = newGVgen("Symbol");
+	GV* gv = newGVgen(classname);
 	SV* ret = newRV_noinc((SV*)gv);
 	IO* io = GvIOn(gv);
-	HV* stash = gv_stashsv(classname, FALSE);
+	HV* stash = gv_stashpv(classname, FALSE);
 	IoTYPE(io) = '<';
 	IoIFP(io) = pio;
 	IoOFP(io) = pio;
@@ -146,22 +154,79 @@ static UV S_get_event_flag(pTHX_ SV* flag_name) {
 }
 #define get_event_flag(name) S_get_event_flag(aTHX_ name)
 
+static SV* S_new_eventfd(pTHX_ const char* classname, UV initial, int flags) {
+	int fd = eventfd(initial, flags);
+	if (fd < 0)
+		die_sys(aTHX_ "Can't open eventfd descriptor: %s");
+	return io_fdopen(fd, classname);
+}
+#define new_eventfd(classname, initial, flags) S_new_eventfd(aTHX_ classname, initial, flags)
+
+static SV* S_new_signalfd(aTHX_ const char* classname, SV* sigmask) {
+	int fd = signalfd(-1, get_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
+	if (fd < 0)
+		die_sys(aTHX_ "Can't open signalfd descriptor: %s");
+	return io_fdopen(fd, classname);
+}
+#define new_signalfd(classname, sigset) S_new_signalfd(aTHX_ classname, sigset)
+
+static SV* S_new_timerfd(pTHX_ const char* classname, SV* clock, const char* funcname) {
+	clockid_t clock_id = SvROK(clock) ? get_clock(clock, funcname) : get_clockid(SvPV_nolen(clock));
+	int fd = timerfd_create(clock_id, TFD_CLOEXEC);
+	if (fd < 0)
+		die_sys(aTHX_ "Can't open timerfd descriptor: %s");
+	return io_fdopen(fd, classname);
+}
+#define new_timerfd(classname, clock, func) S_new_timerfd(aTHX_ classname, clock, func)
+
+MODULE = Linux::FD				PACKAGE = Linux::FD
+
+BOOT:
+	load_module(PERL_LOADMOD_NOIMPORT, newSVpvs("IO::Handle"), NULL);
+	av_push(get_av("Linux::FD::Event::ISA" , GV_ADD), newSVpvs("IO::Handle"));
+	av_push(get_av("Linux::FD::Signal::ISA", GV_ADD), newSVpvs("IO::Handle"));
+	av_push(get_av("Linux::FD::Timer::ISA" , GV_ADD), newSVpvs("IO::Handle"));
+
+SV*
+eventfd(initial = 0, ...)
+	UV initial;
+	PREINIT:
+		int i, flags = EFD_CLOEXEC;
+	CODE:
+	for (i = 1; i < items; i++)
+		flags |= get_event_flag(ST(i));
+	RETVAL = new_eventfd("Linux::FD::Event", initial, flags);
+	OUTPUT:
+		RETVAL
+
+SV*
+signalfd(sigmask)
+	SV* sigmask;
+	CODE:
+	RETVAL = new_signalfd("Linux::FD::Signal", sigmask);
+	OUTPUT:
+	RETVAL
+
+SV*
+timerfd(clock)
+	SV* clock;
+	CODE:
+	RETVAL = new_timerfd("Linux::FD::Timer", clock, "timerfd");
+	OUTPUT:
+	RETVAL
+
 MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
 SV*
 new(classname, initial = 0, ...)
-	SV* classname;
+	const char* classname;
 	UV initial;
 	PREINIT:
-		HV* stash;
-		int fd, i, flags = EFD_CLOEXEC;
+		int i, flags = EFD_CLOEXEC;
 	CODE:
 		for (i = 2; i < items; i++)
 			flags |= get_event_flag(ST(i));
-		fd = eventfd(initial, flags);
-		if (fd < 0)
-			Perl_croak(aTHX_ "Can't open eventfd descriptor: %s");
-		RETVAL = io_fdopen(fd, classname);
+		RETVAL = new_eventfd(classname, initial, flags);
 	OUTPUT:
 		RETVAL
 
@@ -214,16 +279,11 @@ MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
 SV*
 new(classname, sigmask)
-	SV* classname;
+	const char* classname;
 	SV* sigmask;
 	PREINIT:
-	int fd;
-	HV* stash;
 	CODE:
-		fd = signalfd(-1, get_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
-		if (fd < 0)
-			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
-		RETVAL = io_fdopen(fd, classname);
+		RETVAL = new_signalfd(classname, sigmask);
 	OUTPUT:
 		RETVAL
 
@@ -280,18 +340,11 @@ receive(self)
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
 
 SV*
-new(classname, clock_name)
-	SV* classname;
-	const char* clock_name;
-	PREINIT:
-		clockid_t clock_id;
-		int fd;
+new(classname, clock)
+	const char* classname;
+	SV* clock;
 	CODE:
-		clock_id = get_clockid(clock_name);
-		fd = timerfd_create(clock_id, TFD_CLOEXEC);
-		if (fd < 0)
-			Perl_croak(aTHX_ "Can't open signalfd descriptor: %s");
-		RETVAL = io_fdopen(fd, classname);
+		RETVAL = new_timerfd(classname, clock, "Linux::FD::Timer->new");
 	OUTPUT:
 		RETVAL
 
