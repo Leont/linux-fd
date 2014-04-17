@@ -179,6 +179,15 @@ static SV* S_new_timerfd(pTHX_ const char* classname, SV* clock, const char* fun
 }
 #define new_timerfd(classname, clock, func) S_new_timerfd(aTHX_ classname, clock, func)
 
+static int S_interrupted(pTHX_ int value) {
+	if (value == -1 && errno == EINTR) {
+		PERL_ASYNC_CHECK();
+		return 1;
+	}
+	return 0;
+}
+#define interrupted(value) S_interrupted(aTHX_ value)
+
 MODULE = Linux::FD				PACKAGE = Linux::FD
 
 BOOT:
@@ -240,7 +249,7 @@ get(self)
 		events = get_fd(self);
 		do {
 			ret = read(events, &buffer, sizeof buffer);
-		} while (ret == -1 && errno == EINTR);
+		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
 				XSRETURN_EMPTY;
@@ -263,7 +272,7 @@ add(self, value)
 		buffer = value;
 		do {
 			ret = write(events, &buffer, sizeof buffer);
-		} while (ret == -1 && errno == EINTR);
+		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
 				XSRETURN_EMPTY;
@@ -308,7 +317,7 @@ receive(self)
 		timer = get_fd(self);
 		do {
 			tmp = read(timer, &buffer, sizeof buffer);
-		} while (tmp == -1 && errno == EINTR);
+		} while (interrupted(tmp));
 		if (tmp == -1) {
 			if (errno == EAGAIN)
 				XSRETURN_EMPTY;
@@ -391,7 +400,7 @@ receive(self)
 		timer = get_fd(self);
 		do {
 			ret = read(timer, &buffer, sizeof buffer);
-		} while (ret == -1 && errno == EINTR);
+		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
 				XSRETURN_EMPTY;
