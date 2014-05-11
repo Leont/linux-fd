@@ -157,15 +157,15 @@ static UV S_get_event_flag(pTHX_ SV* flag_name) {
 static SV* S_new_eventfd(pTHX_ const char* classname, UV initial, int flags) {
 	int fd = eventfd(initial, flags);
 	if (fd < 0)
-		die_sys(aTHX_ "Can't open eventfd descriptor: %s");
+		die_sys("Can't open eventfd descriptor: %s");
 	return io_fdopen(fd, classname);
 }
 #define new_eventfd(classname, initial, flags) S_new_eventfd(aTHX_ classname, initial, flags)
 
-static SV* S_new_signalfd(aTHX_ const char* classname, SV* sigmask) {
+static SV* S_new_signalfd(pTHX_ const char* classname, SV* sigmask) {
 	int fd = signalfd(-1, get_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
 	if (fd < 0)
-		die_sys(aTHX_ "Can't open signalfd descriptor: %s");
+		die_sys("Can't open signalfd descriptor: %s");
 	return io_fdopen(fd, classname);
 }
 #define new_signalfd(classname, sigset) S_new_signalfd(aTHX_ classname, sigset)
@@ -174,7 +174,7 @@ static SV* S_new_timerfd(pTHX_ const char* classname, SV* clock, const char* fun
 	clockid_t clock_id = SvROK(clock) ? get_clock(clock, funcname) : get_clockid(SvPV_nolen(clock));
 	int fd = timerfd_create(clock_id, TFD_CLOEXEC);
 	if (fd < 0)
-		die_sys(aTHX_ "Can't open timerfd descriptor: %s");
+		die_sys("Can't open timerfd descriptor: %s");
 	return io_fdopen(fd, classname);
 }
 #define new_timerfd(classname, clock, func) S_new_timerfd(aTHX_ classname, clock, func)
