@@ -1,6 +1,7 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+          - Add a correct IoTYPE to all filehandles
 
 0.011     2014-05-11 14:43:33 Europe/Amsterdam
           Fix various compilation issues on threaded perls

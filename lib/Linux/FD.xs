@@ -86,19 +86,19 @@ static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
-static SV* S_io_fdopen(pTHX_ int fd, const char* classname) {
+static SV* S_io_fdopen(pTHX_ int fd, const char* classname, char type) {
 	PerlIO* pio = PerlIO_fdopen(fd, "r");
 	GV* gv = newGVgen(classname);
 	SV* ret = newRV_noinc((SV*)gv);
 	IO* io = GvIOn(gv);
 	HV* stash = gv_stashpv(classname, FALSE);
-	IoTYPE(io) = '<';
+	IoTYPE(io) = type;
 	IoIFP(io) = pio;
 	IoOFP(io) = pio;
 	sv_bless(ret, stash);
 	return ret;
 }
-#define io_fdopen(fd, classname) S_io_fdopen(aTHX_ fd, classname)
+#define io_fdopen(fd, classname, type) S_io_fdopen(aTHX_ fd, classname, type)
 
 #ifndef EFD_CLOEXEC
 #define EFD_CLOEXEC 0
@@ -138,7 +138,7 @@ static SV* S_new_eventfd(pTHX_ const char* classname, UV initial, int flags) {
 	int fd = eventfd(initial, flags);
 	if (fd < 0)
 		die_sys("Can't open eventfd descriptor: %s");
-	return io_fdopen(fd, classname);
+	return io_fdopen(fd, classname, '|');
 }
 #define new_eventfd(classname, initial, flags) S_new_eventfd(aTHX_ classname, initial, flags)
 
@@ -146,7 +146,7 @@ static SV* S_new_signalfd(pTHX_ const char* classname, SV* sigmask) {
 	int fd = signalfd(-1, get_sigset(sigmask, "signalfd"), SFD_CLOEXEC);
 	if (fd < 0)
 		die_sys("Can't open signalfd descriptor: %s");
-	return io_fdopen(fd, classname);
+	return io_fdopen(fd, classname, '<');
 }
 #define new_signalfd(classname, sigset) S_new_signalfd(aTHX_ classname, sigset)
 
@@ -155,7 +155,7 @@ static SV* S_new_timerfd(pTHX_ const char* classname, SV* clock, const char* fun
 	int fd = timerfd_create(clock_id, TFD_CLOEXEC);
 	if (fd < 0)
 		die_sys("Can't open timerfd descriptor: %s");
-	return io_fdopen(fd, classname);
+	return io_fdopen(fd, classname, '<');
 }
 #define new_timerfd(classname, clock, func) S_new_timerfd(aTHX_ classname, clock, func)
 
