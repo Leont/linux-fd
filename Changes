@@ -1,6 +1,8 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+
+0.012     2022-12-27 23:13:33+01:00 Europe/Amsterdam
           - Add a correct IoTYPE to all filehandles
 
 0.011     2014-05-11 14:43:33 Europe/Amsterdam
