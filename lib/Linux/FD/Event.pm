@@ -22,9 +22,13 @@ use Linux::FD ();
      $foo->add($_) while <>;
  }
 
+=head1 DESCRIPTION
+
+This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. It has two modes, default and semaphore, that differ only in C<get> behavior as described below.
+
 =method new($initial_value, @flags)
 
-This creates an eventfd object that can be used as an event wait/notify mechanism by userspace applications, and by the kernel to notify userspace applications of events. The object contains an unsigned 64-bit integer counter that is maintained by the kernel. This counter is initialized with the value specified in the argument C<$initial_value>. C<@flags> is an optional list of flags, currently limited to C<'non-blocking'> (requires Linux 2.6.27), and C<'semaphore'> (requires Linux 2.6.30).
+This creates a new eventfd filehandler. The counter is initialized with the value specified in the argument C<$initial_value>. C<@flags> is an optional list of flags, currently limited to C<'non-blocking'> (requires Linux 2.6.27), and C<'semaphore'> (requires Linux 2.6.30).
 
 =method get()
 
