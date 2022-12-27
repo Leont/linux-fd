@@ -14,7 +14,7 @@ use Linux::FD ();
 
  use Linux::FD::Timer;
 
- my $fh = Linux::FD::Timer->new('monotonic');
+ my $fh = Linux::FD::Timer->new('monotonic', @flags);
  $fh->set_timeout(10, 10);
  while (1) {
      #do something..
@@ -27,7 +27,7 @@ This module creates and operates on a timer that delivers timer expiration notif
 
 =method new($clockid)
 
-This creates a new timer object, and returns a file handle that refers to that timer. The clockid argument specifies the clock that is used to mark the progress of the timer, and must be either C<'realtime'> or C<'monotonic'>. C<realtime> is a settable system-wide clock. C<monotonic> is a non-settable clock that is not affected by discontinuous changes in the system clock (e.g., manual changes to system time). The current value of each of these clocks can be retrieved using L<POSIX::RT::Clock>.
+This creates a new timer object, and returns a file handle that refers to that timer. The clockid argument specifies the clock that is used to mark the progress of the timer, and must be either C<'realtime'> or C<'monotonic'>. C<realtime> is a settable system-wide clock. C<monotonic> is a non-settable clock that is not affected by discontinuous changes in the system clock (e.g., manual changes to system time). The current value of each of these clocks can be retrieved using L<POSIX::RT::Clock>. C<@flags> is an optional list of flags, currently limited to C<'non-blocking'> (requires Linux 2.6.27).
 
 =method get_timeout()
 
