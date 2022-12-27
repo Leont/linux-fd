@@ -64,8 +64,11 @@ static void nv_to_timespec(NV input, struct timespec* output) {
 typedef struct { const char* key; clockid_t value; } map[];
 
 static map clocks = {
-	{ "monotonic", CLOCK_MONOTONIC },
-	{ "realtime" , CLOCK_REALTIME  },
+	{ "monotonic"     , CLOCK_MONOTONIC },
+	{ "realtime"      , CLOCK_REALTIME  },
+	{ "boottime"      , CLOCK_BOOTTIME  },
+	{ "realtime_alarm", CLOCK_REALTIME_ALARM },
+	{ "boottime_alarm", CLOCK_BOOTTIME_ALARM },
 };
 
 static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
