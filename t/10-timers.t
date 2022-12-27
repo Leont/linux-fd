@@ -3,8 +3,9 @@
 use strict;
 use warnings FATAL => 'all';
 
-use Test::More tests => 8;
+use Test::More;
 use Linux::FD 'timerfd';
+use Linux::FD::Timer;
 use IO::Select;
 use Time::HiRes qw/sleep/;
 
@@ -39,3 +40,11 @@ ok 0.099 < $interval && $interval < 0.101, 'Interval is right';
 sleep 0.21;
 
 is $fd->receive, 2, 'Got two timeouts';
+
+my %clocks = map { $_ => 1 } Linux::FD::Timer->clocks;
+
+ok $clocks{monotonic}, 'Has monotonic clock';
+ok $clocks{realtime}, 'Has realtime clock';
+ok $clocks{boottime}, 'Has boottime clock';
+
+done_testing;

@@ -404,3 +404,11 @@ receive(self)
 	OUTPUT:
 		RETVAL
 
+void
+clocks(classname)
+	SV* classname;
+	INIT:
+	int i;
+	PPCODE:
+	for (i = 0; i < sizeof clocks / sizeof *clocks; ++i)
+		mXPUSHp(clocks[i].key, strlen(clocks[i].key));

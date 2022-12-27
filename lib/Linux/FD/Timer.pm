@@ -41,4 +41,8 @@ Set the timer and interval values. If C<$abstime> is true, they are absolute val
 
 If the timer has already expired one or more times since its settings were last modified using settime(), or since the last successful wait, then receive returns an unsigned 64-bit integer containing the number of expirations that have occurred. If not it either returns undef or it blocks (if the handle is blocking).
 
+=method clocks
+
+This returns a list of all known clocks usable in a timerfd. Do note that some clocks may require superuser privileges.
+
 =cut
