@@ -1,6 +1,8 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+
+0.013     2022-12-30 14:36:23+01:00 Europe/Amsterdam
           - Restore compilation on older Linuxes
 
 0.012     2022-12-27 23:13:33+01:00 Europe/Amsterdam
