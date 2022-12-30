@@ -1,6 +1,7 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+          - Restore compilation on older Linuxes
 
 0.012     2022-12-27 23:13:33+01:00 Europe/Amsterdam
           - Add a correct IoTYPE to all filehandles
