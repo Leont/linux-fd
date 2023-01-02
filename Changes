@@ -1,6 +1,7 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+          - Don't test for boottime timer presence
 
 0.013     2022-12-30 14:36:23+01:00 Europe/Amsterdam
           - Restore compilation on older Linuxes
