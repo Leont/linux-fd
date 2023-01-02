@@ -118,7 +118,7 @@ static UV S_get_flag(pTHX_ map flags, size_t map_size, SV* flag_name) {
 	for (i = 0; i < map_size / sizeof *flags; ++i)
 		if (strEQ(SvPV_nolen(flag_name), flags[i].key))
 			return flags[i].value;
-	Perl_croak(aTHX_ "No such flag '%s' known", flag_name);
+	Perl_croak(aTHX_ "No such flag '%s' known", SvPV_nolen(flag_name));
 }
 #define get_flag(map, name) S_get_flag(aTHX_ map, sizeof(map), name)
 
