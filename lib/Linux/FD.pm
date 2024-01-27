@@ -3,7 +3,7 @@ package Linux::FD;
 use 5.006;
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 use Sub::Exporter -setup => { exports => [qw/eventfd signalfd timerfd/] };
 
