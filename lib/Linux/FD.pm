@@ -5,7 +5,8 @@ use 5.006;
 use strict;
 use warnings;
 
-use Sub::Exporter -setup => { exports => [qw/eventfd signalfd timerfd/] };
+use Exporter 5.57 'import';
+our @EXPORT_OK = qw/eventfd signalfd timerfd/;
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, __PACKAGE__->VERSION);
