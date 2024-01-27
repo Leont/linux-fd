@@ -344,7 +344,7 @@ receive(self)
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
 
 SV*
-new(classname, clock)
+new(classname, clock, ...)
 	const char* classname;
 	SV* clock;
 	PREINIT:
