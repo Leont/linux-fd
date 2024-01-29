@@ -1,0 +1,6 @@
+TYPEMAP
+Fd	T_FD
+
+INPUT
+T_FD
+	$var = PerlIO_fileno(IoOFP(sv_2io(SvRV($arg))))

@@ -16,8 +16,6 @@
 #include "XSUB.h"
 #include "ppport.h"
 
-#define get_fd(self) PerlIO_fileno(IoOFP(sv_2io(SvRV(self))));
-
 #define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
 #define NANO_SECONDS 1000000000
@@ -139,6 +137,8 @@ static int S_interrupted(pTHX_ int value) {
 
 #define NEVER (struct timespec) { 0 }
 
+typedef int Fd;
+
 MODULE = Linux::FD				PACKAGE = Linux::FD
 
 BOOT:
@@ -189,14 +189,13 @@ SV* new(const char* classname, UV initial = 0, ...)
 	OUTPUT:
 		RETVAL
 
-UV get(SV* self)
+UV get(Fd eventfd)
 	PREINIT:
 		uint64_t buffer;
-		int ret, events;
+		int ret;
 	CODE:
-		events = get_fd(self);
 		do {
-			ret = read(events, &buffer, sizeof buffer);
+			ret = read(eventfd, &buffer, sizeof buffer);
 		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
@@ -208,15 +207,14 @@ UV get(SV* self)
 	OUTPUT:
 		RETVAL
 
-UV add(SV* self, UV value)
+UV add(Fd eventfd, UV value)
 	PREINIT:
 		uint64_t buffer;
-		int ret, events;
+		int ret;
 	CODE:
-		events = get_fd(self);
 		buffer = value;
 		do {
-			ret = write(events, &buffer, sizeof buffer);
+			ret = write(eventfd, &buffer, sizeof buffer);
 		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
@@ -241,23 +239,19 @@ SV* new(const char* classname, sigset_t* sigmask, ...)
 	OUTPUT:
 		RETVAL
 
-void set_mask(SV* self, sigset_t* sigmask)
-	PREINIT:
-	int fd;
+void set_mask(Fd fd, sigset_t* sigmask)
 	CODE:
-	fd = get_fd(self);
 	if(signalfd(fd, sigmask, 0) == -1)
 		die_sys("Couldn't set_mask: %s");
 
-SV* receive(SV* self)
+SV* receive(Fd fd)
 	PREINIT:
 		struct signalfd_siginfo buffer;
-		int tmp, timer;
+		int tmp;
 		HV* hash;
 	CODE:
-		timer = get_fd(self);
 		do {
-			tmp = read(timer, &buffer, sizeof buffer);
+			tmp = read(fd, &buffer, sizeof buffer);
 		} while (interrupted(tmp));
 		if (tmp == -1) {
 			if (errno == EAGAIN)
@@ -299,40 +293,35 @@ SV* new(const char* classname, SV* clock, ...)
 	OUTPUT:
 		RETVAL
 
-void get_timeout(SV* self)
+void get_timeout(Fd timerfd)
 	PREINIT:
-		int timer;
 		struct itimerspec value;
 	PPCODE:
-		timer = get_fd(self);
-		if (timerfd_gettime(timer, &value) == -1)
+		if (timerfd_gettime(timerfd, &value) == -1)
 			die_sys("Couldn't get_timeout: %s");
 		mXPUSHn(timespec_to_nv(&value.it_value));
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
-SV* set_timeout(SV* self, struct timespec new_value, struct timespec new_interval = NEVER, bool abstime = FALSE)
+SV* set_timeout(Fd timerfd, struct timespec new_value, struct timespec new_interval = NEVER, bool abstime = FALSE)
 	PREINIT:
-		int timer;
 		struct itimerspec new_itimer, old_itimer;
 	PPCODE:
-		timer = get_fd(self);
 		new_itimer.it_value = new_value;
 		new_itimer.it_interval = new_interval;
-		if (timerfd_settime(timer, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)
+		if (timerfd_settime(timerfd, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)
 			die_sys("Couldn't set_timeout: %s");
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
 
-IV receive(SV* self)
+IV receive(Fd timerfd)
 	PREINIT:
 		uint64_t buffer;
-		int ret, timer;
+		int ret;
 	CODE:
-		timer = get_fd(self);
 		do {
-			ret = read(timer, &buffer, sizeof buffer);
+			ret = read(timerfd, &buffer, sizeof buffer);
 		} while (interrupted(ret));
 		if (ret == -1) {
 			if (errno == EAGAIN)
