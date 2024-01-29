@@ -40,21 +40,21 @@ static map clocks = {
 #endif
 };
 
-static clockid_t S_get_clockid(pTHX_ const char* clock_name) {
-	int i;
-	for (i = 0; i < sizeof clocks / sizeof *clocks; ++i) {
-		if (strEQ(clock_name, clocks[i].key))
-			return clocks[i].value;
+static clockid_t S_get_clock(pTHX_ SV* clock, const char* funcname) {
+	if (SvROK(clock)) {
+		SV* value;
+		if (!SvROK(clock) || !(value = SvRV(clock)))
+			Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
+		return SvIV(value);
+	} else {
+		int i;
+		const char* clock_name = SvPV_nolen(clock);
+		for (i = 0; i < sizeof clocks / sizeof *clocks; ++i) {
+			if (strEQ(clock_name, clocks[i].key))
+				return clocks[i].value;
+		}
+		Perl_croak(aTHX_ "No such timer '%s' known", clock_name);
 	}
-	Perl_croak(aTHX_ "No such timer '%s' known", clock_name);
-}
-#define get_clockid(name) S_get_clockid(aTHX_ name)
-
-static clockid_t S_get_clock(pTHX_ SV* ref, const char* funcname) {
-	SV* value;
-	if (!SvROK(ref) || !(value = SvRV(ref)))
-		Perl_croak(aTHX_ "Could not %s: this variable is not a clock", funcname);
-	return SvIV(value);
 }
 #define get_clock(ref, func) S_get_clock(aTHX_ ref, func)
 
@@ -118,7 +118,7 @@ static map timer_flags = {
 #define get_timer_flag(name) get_flag(timer_flags, name)
 
 static SV* S_new_timerfd(pTHX_ const char* classname, SV* clock, int flags, const char* funcname) {
-	clockid_t clock_id = SvROK(clock) ? get_clock(clock, funcname) : get_clockid(SvPV_nolen(clock));
+	clockid_t clock_id = get_clock(clock, funcname);
 	int fd = timerfd_create(clock_id, flags);
 	if (fd < 0)
 		die_sys("Can't open timerfd descriptor: %s");
