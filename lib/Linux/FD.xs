@@ -20,45 +20,10 @@
 
 #define die_sys(format) Perl_croak(aTHX_ format, strerror(errno))
 
-static sigset_t* S_sv_to_sigset(pTHX_ SV* sigmask, const char* name) {
-	IV tmp;
-	if (!SvOK(sigmask))
-		return NULL;
-	if (!SvROK(sigmask) || !sv_derived_from(sigmask, "POSIX::SigSet"))
-		Perl_croak(aTHX_ "Value is not of type POSIX::SigSet");
-#if PERL_VERSION > 15 || PERL_VERSION == 15 && PERL_SUBVERSION > 2
-	return (sigset_t *) SvPV_nolen(SvRV(sigmask));
-#else
-	tmp = SvIV((SV*)SvRV(sigmask));
-	return INT2PTR(sigset_t*, tmp);
-#endif
-}
-#define sv_to_sigset(sigmask, name) S_sv_to_sigset(aTHX_ sigmask, name)
-
-static sigset_t* S_get_sigset(pTHX_ SV* signal, const char* name) {
-	if (SvROK(signal))
-		return sv_to_sigset(signal, name);
-	else {
-		int signo = (SvIOK(signal) || looks_like_number(signal)) && SvIV(signal) ? SvIV(signal) : whichsig(SvPV_nolen(signal));
-		SV* buffer = sv_2mortal(newSVpvn("", 0));
-		SvGROW(buffer, sizeof(sigset_t));
-		sigset_t* ret = (sigset_t*)SvPV_nolen(buffer);
-		sigemptyset(ret);
-		sigaddset(ret, signo);
-		return ret;
-	}
-}
-#define get_sigset(sigmask, name) S_get_sigset(aTHX_ sigmask, name)
-
 #define NANO_SECONDS 1000000000
 
 static NV timespec_to_nv(struct timespec* time) {
 	return time->tv_sec + time->tv_nsec / (double)NANO_SECONDS;
-}
-
-static void nv_to_timespec(NV input, struct timespec* output) {
-	output->tv_sec  = (time_t) floor(input);
-	output->tv_nsec = (long) ((input - output->tv_sec) * NANO_SECONDS);
 }
 
 typedef struct { const char* key; size_t length; int value; } map[];
@@ -141,8 +106,8 @@ static map signal_flags = {
 };
 #define get_signal_flag(name) get_flag(signal_flags, name)
 
-static SV* S_new_signalfd(pTHX_ const char* classname, SV* sigmask, int flags) {
-	int fd = signalfd(-1, get_sigset(sigmask, "signalfd"), flags);
+static SV* S_new_signalfd(pTHX_ const char* classname, const sigset_t* sigmask, int flags) {
+	int fd = signalfd(-1, sigmask, flags);
 	if (fd < 0)
 		die_sys("Can't open signalfd descriptor: %s");
 	return io_fdopen(fd, classname, '<');
@@ -172,6 +137,8 @@ static int S_interrupted(pTHX_ int value) {
 }
 #define interrupted(value) S_interrupted(aTHX_ value)
 
+#define NEVER (struct timespec) { 0 }
+
 MODULE = Linux::FD				PACKAGE = Linux::FD
 
 BOOT:
@@ -190,7 +157,7 @@ SV* eventfd(UV initial = 0, ...)
 	OUTPUT:
 		RETVAL
 
-SV* signalfd(SV* sigmask, ...)
+SV* signalfd(sigset_t* sigmask, ...)
 	PREINIT:
 		int i, flags = SFD_CLOEXEC;
 	CODE:
@@ -264,7 +231,7 @@ UV add(SV* self, UV value)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
-SV* new(const char* classname, SV* sigmask, ...)
+SV* new(const char* classname, sigset_t* sigmask, ...)
 	PREINIT:
 		int i, flags = SFD_CLOEXEC;
 	CODE:
@@ -274,12 +241,12 @@ SV* new(const char* classname, SV* sigmask, ...)
 	OUTPUT:
 		RETVAL
 
-void set_mask(SV* self, SV* sigmask)
+void set_mask(SV* self, sigset_t* sigmask)
 	PREINIT:
 	int fd;
 	CODE:
 	fd = get_fd(self);
-	if(signalfd(fd, sv_to_sigset(sigmask, "signalfd"), 0) == -1)
+	if(signalfd(fd, sigmask, 0) == -1)
 		die_sys("Couldn't set_mask: %s");
 
 SV* receive(SV* self)
@@ -344,14 +311,14 @@ void get_timeout(SV* self)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
-SV* set_timeout(SV* self, NV new_value, NV new_interval = 0, bool abstime = FALSE)
+SV* set_timeout(SV* self, struct timespec new_value, struct timespec new_interval = NEVER, bool abstime = FALSE)
 	PREINIT:
 		int timer;
 		struct itimerspec new_itimer, old_itimer;
 	PPCODE:
 		timer = get_fd(self);
-		nv_to_timespec(new_value, &new_itimer.it_value);
-		nv_to_timespec(new_interval, &new_itimer.it_interval);
+		new_itimer.it_value = new_value;
+		new_itimer.it_interval = new_interval;
 		if (timerfd_settime(timer, (abstime ? TIMER_ABSTIME : 0), &new_itimer, &old_itimer) == -1)
 			die_sys("Couldn't set_timeout: %s");
 		mXPUSHn(timespec_to_nv(&old_itimer.it_value));
