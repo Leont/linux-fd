@@ -180,9 +180,7 @@ BOOT:
 	av_push(get_av("Linux::FD::Signal::ISA", GV_ADD), newSVpvs("IO::Handle"));
 	av_push(get_av("Linux::FD::Timer::ISA" , GV_ADD), newSVpvs("IO::Handle"));
 
-SV*
-eventfd(initial = 0, ...)
-	UV initial;
+SV* eventfd(UV initial = 0, ...)
 	PREINIT:
 		int i, flags = EFD_CLOEXEC;
 	CODE:
@@ -192,9 +190,7 @@ eventfd(initial = 0, ...)
 	OUTPUT:
 		RETVAL
 
-SV*
-signalfd(sigmask, ...)
-	SV* sigmask;
+SV* signalfd(SV* sigmask, ...)
 	PREINIT:
 		int i, flags = SFD_CLOEXEC;
 	CODE:
@@ -204,9 +200,7 @@ signalfd(sigmask, ...)
 	OUTPUT:
 	RETVAL
 
-SV*
-timerfd(clock, ...)
-	SV* clock;
+SV* timerfd(SV* clock, ...)
 	PREINIT:
 		int i, flags = TFD_CLOEXEC;
 	CODE:
@@ -218,10 +212,7 @@ timerfd(clock, ...)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Event
 
-SV*
-new(classname, initial = 0, ...)
-	const char* classname;
-	UV initial;
+SV* new(const char* classname, UV initial = 0, ...)
 	PREINIT:
 		int i, flags = EFD_CLOEXEC;
 	CODE:
@@ -231,9 +222,7 @@ new(classname, initial = 0, ...)
 	OUTPUT:
 		RETVAL
 
-UV
-get(self)
-	SV* self;
+UV get(SV* self)
 	PREINIT:
 		uint64_t buffer;
 		int ret, events;
@@ -252,10 +241,7 @@ get(self)
 	OUTPUT:
 		RETVAL
 
-UV
-add(self, value)
-	SV* self;
-	UV value;
+UV add(SV* self, UV value)
 	PREINIT:
 		uint64_t buffer;
 		int ret, events;
@@ -278,10 +264,7 @@ add(self, value)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Signal
 
-SV*
-new(classname, sigmask, ...)
-	const char* classname;
-	SV* sigmask;
+SV* new(const char* classname, SV* sigmask, ...)
 	PREINIT:
 		int i, flags = SFD_CLOEXEC;
 	CODE:
@@ -291,9 +274,7 @@ new(classname, sigmask, ...)
 	OUTPUT:
 		RETVAL
 
-void set_mask(self, sigmask)
-	SV* self;
-	SV* sigmask;
+void set_mask(SV* self, SV* sigmask)
 	PREINIT:
 	int fd;
 	CODE:
@@ -301,9 +282,7 @@ void set_mask(self, sigmask)
 	if(signalfd(fd, sv_to_sigset(sigmask, "signalfd"), 0) == -1)
 		die_sys("Couldn't set_mask: %s");
 
-SV*
-receive(self)
-	SV* self;
+SV* receive(SV* self)
 	PREINIT:
 		struct signalfd_siginfo buffer;
 		int tmp, timer;
@@ -343,10 +322,7 @@ receive(self)
 
 MODULE = Linux::FD				PACKAGE = Linux::FD::Timer
 
-SV*
-new(classname, clock, ...)
-	const char* classname;
-	SV* clock;
+SV* new(const char* classname, SV* clock, ...)
 	PREINIT:
 		int i, flags = TFD_CLOEXEC;
 	CODE:
@@ -356,9 +332,7 @@ new(classname, clock, ...)
 	OUTPUT:
 		RETVAL
 
-void
-get_timeout(self)
-	SV* self;
+void get_timeout(SV* self)
 	PREINIT:
 		int timer;
 		struct itimerspec value;
@@ -370,12 +344,7 @@ get_timeout(self)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&value.it_interval));
 
-SV*
-set_timeout(self, new_value, new_interval = 0, abstime = 0)
-	SV* self;
-	NV new_value;
-	NV new_interval;
-	IV abstime;
+SV* set_timeout(SV* self, NV new_value, NV new_interval = 0, bool abstime = FALSE)
 	PREINIT:
 		int timer;
 		struct itimerspec new_itimer, old_itimer;
@@ -389,9 +358,7 @@ set_timeout(self, new_value, new_interval = 0, abstime = 0)
 		if (GIMME_V == G_ARRAY)
 			mXPUSHn(timespec_to_nv(&old_itimer.it_interval));
 
-IV
-receive(self)
-	SV* self;
+IV receive(SV* self)
 	PREINIT:
 		uint64_t buffer;
 		int ret, timer;
@@ -410,9 +377,7 @@ receive(self)
 	OUTPUT:
 		RETVAL
 
-void
-clocks(classname)
-	SV* classname;
+void clocks(SV* classname)
 	INIT:
 	int i;
 	PPCODE:

@@ -1,6 +1,7 @@
 Revision history for Linux-FD
 
 {{$NEXT}}
+          - Adapt to C89 style XS arguments
 
 0.015     2024-01-27 21:06:57+01:00 Europe/Brussels
           - Allow flags to be passed to FD::Timer constructor
