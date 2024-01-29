@@ -244,14 +244,12 @@ void set_mask(Fd fd, sigset_t* sigmask)
 	if(signalfd(fd, sigmask, 0) == -1)
 		die_sys("Couldn't set_mask: %s");
 
-SV* receive(Fd fd)
+struct signalfd_siginfo receive(Fd fd)
 	PREINIT:
-		struct signalfd_siginfo buffer;
 		int tmp;
-		HV* hash;
 	CODE:
 		do {
-			tmp = read(fd, &buffer, sizeof buffer);
+			tmp = read(fd, &RETVAL, sizeof(RETVAL));
 		} while (interrupted(tmp));
 		if (tmp == -1) {
 			if (errno == EAGAIN)
@@ -259,24 +257,6 @@ SV* receive(Fd fd)
 			else
 				die_sys("Couldn't read from signalfd: %s");
 		}
-		hash = newHV();
-		SET_HASH_U(signo);
-		SET_HASH_I(errno);
-		SET_HASH_I(code);
-		SET_HASH_U(pid);
-		SET_HASH_U(uid);
-		SET_HASH_I(fd);
-		SET_HASH_U(tid);
-		SET_HASH_U(band);
-		SET_HASH_U(overrun);
-		SET_HASH_U(trapno);
-		SET_HASH_I(status);
-		SET_HASH_I(int);
-		SET_HASH_U(ptr);
-		SET_HASH_U(utime);
-		SET_HASH_U(stime);
-		SET_HASH_U(addr);
-		RETVAL = newRV_noinc((SV*)hash);
 	OUTPUT:
 		RETVAL
 

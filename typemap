@@ -1,6 +1,29 @@
 TYPEMAP
 Fd	T_FD
+struct signalfd_siginfo T_SIGFDINFO
 
 INPUT
 T_FD
 	$var = PerlIO_fileno(IoOFP(sv_2io(SvRV($arg))))
+
+OUTPUT
+T_SIGFDINFO
+	{
+	HV* ret = newHV();
+	hv_stores(ret, \"signo\", newSViv($var.ssi_signo));
+	hv_stores(ret, \"code\", newSViv($var.ssi_code));
+	hv_stores(ret, \"errno\", newSViv($var.ssi_errno));
+	hv_stores(ret, \"pid\", newSVuv($var.ssi_pid));
+	hv_stores(ret, \"uid\", newSVuv($var.ssi_uid));
+	hv_stores(ret, \"fd\", newSViv($var.ssi_fd));
+	hv_stores(ret, \"tid\", newSVuv($var.ssi_tid));
+	hv_stores(ret, \"band\", newSVuv($var.ssi_band));
+	hv_stores(ret, \"overrun\", newSVuv($var.ssi_overrun));
+	hv_stores(ret, \"trapno\", newSVuv($var.ssi_trapno));
+	hv_stores(ret, \"status\", newSViv($var.ssi_status));
+	hv_stores(ret, \"value\", newSViv($var.ssi_int));
+	hv_stores(ret, \"ptr\", newSVuv(PTR2UV($var.ssi_ptr)));
+	hv_stores(ret, \"addr\", newSVuv(PTR2UV($var.ssi_addr)));
+
+	$arg = newRV_noinc((SV*)ret);
+	}
